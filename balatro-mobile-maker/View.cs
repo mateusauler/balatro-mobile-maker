@@ -398,8 +398,13 @@ internal class View
             extractZip("platform-tools.zip", "platform-tools");
         }
 
-        //Prompt user
-        while (!AskQuestion("Is your Android device connected to the host with USB Debugging enabled?"))
-            Log("Please enable USB Debugging on your Android device, and connect it to the host.");
+        while(true)
+        {
+            Process p = Platform.useADB("shell whoami > /dev/null", true);
+            if (p.ExitCode == 0)
+                break;
+            Console.WriteLine("Android device not found. Please enable USB Debugging on your Android device, connect it to the host and press enter...");
+            Console.ReadLine();
+        }
     }
 }

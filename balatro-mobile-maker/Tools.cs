@@ -191,7 +191,7 @@ internal class Tools
     /// </summary>
     /// <param name="args">Command to pass to the shell</param>
     /// <returns>Process, post finishing.</returns>
-    public static Process RunCommand(string command, string args)
+    public static Process RunCommand(string command, string args, bool ignoreErrors=false)
     {
         //Create a new cmd process
         Process commandLineProcess = new Process();
@@ -219,7 +219,7 @@ internal class Tools
         commandLineProcess.Exited += (_, _) =>
         {
             //Check for errors
-            if (commandLineProcess.ExitCode != 0)
+            if (commandLineProcess.ExitCode != 0 && !ignoreErrors)
             {
                 //Error occurred
                 Log("An unexpected error occurred!");

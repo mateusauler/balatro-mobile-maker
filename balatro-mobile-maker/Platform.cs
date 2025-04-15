@@ -25,14 +25,16 @@ internal class Platform
     private static bool isArm = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture == Architecture.Arm;
 
     //Uses ADB with args
-    public static void useADB(string args)
+    public static Process useADB(string args, bool ignoreErrors=false)
     {
         if (isWindows)
-            RunCommand("platform-tools\\platform-tools\\adb.exe", args);
+            return RunCommand("platform-tools\\platform-tools\\adb.exe", args, ignoreErrors);
 
         if (isOSX || isLinux)
             RunCommand("chmod", "+x platform-tools/platform-tools/adb");
-            RunCommand("platform-tools/platform-tools/adb", args);
+            return RunCommand("platform-tools/platform-tools/adb", args, ignoreErrors);
+
+        return null;
     }
 
     //Uses Java with args
@@ -89,7 +91,7 @@ internal class Platform
                 return Constants.OpenJDKWinX64Link;
             //TODO: uhh something maybe
             //if (isX86)
-            //    return Constants.OpenJDKWinX86Link;
+            //    return Constants.OpenJDKWinX86Link; 
             if (isArm64)
                 return Constants.OpenJDKWinArm64Link;
         }
