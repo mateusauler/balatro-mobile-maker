@@ -14,7 +14,9 @@ internal static class Constants
     public const string IosBaseLink = "https://github.com/blake502/balatro-apk-maker/releases/download/Additional-Tools-1.0/balatro-base.ipa";
 
     //ADB
-    public const string PlatformToolsLink = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip";
+    public const string PlatformToolsWindowsLink = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip";
+    public const string PlatformToolsOSXLink = "https://dl.google.com/android/repository/platform-tools-latest-darwin.zip";
+    public const string PlatformToolsLinuxLink = "https://dl.google.com/android/repository/platform-tools-latest-linux.zip";
 
     //OpenJDK Download Links
     //TODO: Find JDK links for all platforms
@@ -28,4 +30,4 @@ internal static class Constants
     //macOS
     public const string OpenJDKOSXX64Link = "https://aka.ms/download-jdk/microsoft-jdk-21.0.3-macos-x64.tar.gz";
     public const string OpenJDKOSXArm64Link = "https://aka.ms/download-jdk/microsoft-jdk-21.0.3-macos-aarch64.tar.gz";
-} 
+}
