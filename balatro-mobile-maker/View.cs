@@ -39,7 +39,6 @@ internal class View
             _androidBuild = AskQuestion("Would you like to build for Android?");
             _iosBuild = AskQuestion("Would you like to build for iOS (experimental)?");
 
-
             if (_androidBuild || _iosBuild)
             {
                 #region Download tools
@@ -245,7 +244,7 @@ internal class View
                 if (_iosBuild)
                 {
                     #region Packing IPA
-                   
+
                     Log("Repacking iOS app...");
                     ModifyZip();
 
@@ -257,8 +256,8 @@ internal class View
             }
         }
 
-        //TODO: Implement for OSX and Linux!!!
-        if ((!_iosBuild || _androidBuild) && Platform.isWindows)
+        //TODO: Implement for OSX!!!
+        if ((!_iosBuild || _androidBuild) && (Platform.isWindows || Platform.isLinux))
         {
             #region Android options
             #region Auto-install
@@ -269,13 +268,12 @@ internal class View
                 Log("Attempting to install. If prompted, please allow the USB Debugging connection on your Android device.");
 
                 useTool(ProcessTools.ADB, "install balatro.apk");
-                useTool(ProcessTools.ADB, "kill-server");
             }
             #endregion
 
             #region Save transfer
 
-            if (directoryExists(Environment.GetEnvironmentVariable("AppData") + "\\Balatro") && AskQuestion("Would you like to transfer saves from your Steam copy of Balatro to your Android device?"))
+            if (directoryExists(Platform.getGameSaveLocation()) && AskQuestion("Would you like to transfer saves from your Steam copy of Balatro to your Android device?"))
             {
                 Log("Thanks to TheCatRiX for figuring out save transfers!");
 
@@ -283,68 +281,65 @@ internal class View
 
                 Log("Attempting to transfer saves. If prompted, please allow the USB Debugging connection on your Android device.");
 
-                useTool(ProcessTools.ADB, "shell mkdir /data/local/tmp/balatro");
-                useTool(ProcessTools.ADB, "shell mkdir /data/local/tmp/balatro/files");
-                useTool(ProcessTools.ADB, "shell mkdir /data/local/tmp/balatro/files/save");
-                useTool(ProcessTools.ADB, "shell mkdir /data/local/tmp/balatro/balatro/files/save/game");
-                useTool(ProcessTools.ADB, "push \"" + Platform.getGameSaveLocation() + "\\.\" /data/local/tmp/balatro/files/save/game");
+                useTool(ProcessTools.ADB, "shell mkdir -p /data/local/tmp/balatro/balatro/files/save/game");
+
+                useTool(ProcessTools.ADB, "push \"" + Platform.getGameSaveLocation() + "\" /data/local/tmp/balatro/files/save/game");
+
                 useTool(ProcessTools.ADB, "shell am force-stop com.unofficial.balatro");
                 useTool(ProcessTools.ADB, "shell run-as com.unofficial.balatro cp -r /data/local/tmp/balatro/files .");
                 useTool(ProcessTools.ADB, "shell rm -r /data/local/tmp/balatro");
-                useTool(ProcessTools.ADB, "kill-server");
             }
-            else
+            else if (AskQuestion("Would you like to pull saves from your Android device?"))
             {
-                if (AskQuestion("Would you like to pull saves from your Android device?"))
-                {
-                    Log("Warning! If Steam Cloud is enabled, it will overwrite the save you transfer!");
-                    while (!AskQuestion("Have you backed up your saves?"))
-                        Log("Please back up your saves! I am not responsible if your saves get deleted!");
+                Log("Warning! If Steam Cloud is enabled, it will overwrite the save you transfer!");
+                while (!AskQuestion("Have you backed up your saves?"))
+                    Log("Please back up your saves! I am not responsible if your saves get deleted!");
 
-                    PrepareAndroidPlatformTools();
+                PrepareAndroidPlatformTools();
 
-                    Log("Backing up your files...");
-                    if (!directoryExists(Platform.getGameSaveLocation() + "BACKUP"))
-                        System.IO.Directory.CreateDirectory(Platform.getGameSaveLocation() + "BACKUP/");
-                    //TODO: No xcopy
-                    RunCommand("xcopy", "\"" + Platform.getGameSaveLocation() + "\" \"" + Platform.getGameSaveLocation() + "BACKUP\\\" /E /H /Y /V");
-                    tryDelete(Platform.getGameSaveLocation());
-                    System.IO.Directory.CreateDirectory(Platform.getGameSaveLocation());
+                string backupSuffix = "BACKUP";
 
-                    Log("Attempting to pull save files from Android device.");
+                Log("Backing up your files...");
+                directoryCopy(Platform.getGameSaveLocation(), Platform.getGameSaveLocation() + backupSuffix);
 
-                    //This sure isn't pretty, but it should work!
-                    useTool(ProcessTools.ADB, "shell rm -r /data/local/tmp/balatro");
-                    useTool(ProcessTools.ADB, "shell mkdir /data/local/tmp/balatro/");
-                    useTool(ProcessTools.ADB, "shell mkdir /data/local/tmp/balatro/files/");
-                    useTool(ProcessTools.ADB, "shell mkdir /data/local/tmp/balatro/files/1/");
-                    useTool(ProcessTools.ADB, "shell mkdir /data/local/tmp/balatro/files/2/");
-                    useTool(ProcessTools.ADB, "shell mkdir /data/local/tmp/balatro/files/3/");
-                    useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/settings.jkr");
-                    useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/settings.jkr > /data/local/tmp/balatro/files/settings.jkr\"");
-                    useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/1/profile.jkr");
-                    useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/1/profile.jkr > /data/local/tmp/balatro/files/1/profile.jkr\"");
-                    useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/1/meta.jkr");
-                    useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/1/meta.jkr > /data/local/tmp/balatro/files/1/meta.jkr\"");
-                    useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/1/save.jkr");
-                    useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/1/save.jkr > /data/local/tmp/balatro/files/1/save.jkr\"");
-                    useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/2/profile.jkr");
-                    useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/2/profile.jkr > /data/local/tmp/balatro/files/2/profile.jkr\"");
-                    useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/2/meta.jkr");
-                    useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/2/meta.jkr > /data/local/tmp/balatro/files/2/meta.jkr\"");
-                    useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/2/save.jkr");
-                    useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/2/save.jkr > /data/local/tmp/balatro/files/2/save.jkr\"");
-                    useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/3/profile.jkr");
-                    useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/3/profile.jkr > /data/local/tmp/balatro/files/3/profile.jkr\"");
-                    useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/3/meta.jkr");
-                    useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/3/meta.jkr > /data/local/tmp/balatro/files/3/meta.jkr\"");
-                    useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/3/save.jkr");
-                    useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/3/save.jkr > /data/local/tmp/balatro/files/3/save.jkr\"");
-                    useTool(ProcessTools.ADB, "shell find /data/local/tmp/balatro/files/ -maxdepth 2 -size 0c -exec rm '{}' \\;");
-                    useTool(ProcessTools.ADB, "pull /data/local/tmp/balatro/files/. \"" + Platform.getGameSaveLocation() + "\"");
+                // tryDelete(Platform.getGameSaveLocation());
+                System.IO.Directory.CreateDirectory(Platform.getGameSaveLocation());
 
-                    useTool(ProcessTools.ADB, "kill-server");
-                }
+                Log("Attempting to pull save files from Android device.");
+
+                //This sure isn't pretty, but it should work!
+                useTool(ProcessTools.ADB, "shell rm -r /data/local/tmp/balatro");
+                useTool(ProcessTools.ADB, "shell mkdir -p /data/local/tmp/balatro/files/");
+
+                useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/settings.jkr");
+                useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/settings.jkr > /data/local/tmp/balatro/files/settings.jkr\"");
+
+                useTool(ProcessTools.ADB, "shell mkdir -p /data/local/tmp/balatro/files/1/");
+                useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/1/profile.jkr");
+                useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/1/profile.jkr > /data/local/tmp/balatro/files/1/profile.jkr\"");
+                useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/1/meta.jkr");
+                useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/1/meta.jkr > /data/local/tmp/balatro/files/1/meta.jkr\"");
+                useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/1/save.jkr");
+                useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/1/save.jkr > /data/local/tmp/balatro/files/1/save.jkr\"");
+
+                useTool(ProcessTools.ADB, "shell mkdir -p /data/local/tmp/balatro/files/2/");
+                useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/2/profile.jkr");
+                useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/2/profile.jkr > /data/local/tmp/balatro/files/2/profile.jkr\"");
+                useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/2/meta.jkr");
+                useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/2/meta.jkr > /data/local/tmp/balatro/files/2/meta.jkr\"");
+                useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/2/save.jkr");
+                useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/2/save.jkr > /data/local/tmp/balatro/files/2/save.jkr\"");
+
+                useTool(ProcessTools.ADB, "shell mkdir -p /data/local/tmp/balatro/files/3/");
+                useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/3/profile.jkr");
+                useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/3/profile.jkr > /data/local/tmp/balatro/files/3/profile.jkr\"");
+                useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/3/meta.jkr");
+                useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/3/meta.jkr > /data/local/tmp/balatro/files/3/meta.jkr\"");
+                useTool(ProcessTools.ADB, "shell touch /data/local/tmp/balatro/files/3/save.jkr");
+                useTool(ProcessTools.ADB, "shell \"run-as com.unofficial.balatro cat files/save/game/3/save.jkr > /data/local/tmp/balatro/files/3/save.jkr\"");
+
+                useTool(ProcessTools.ADB, "shell find /data/local/tmp/balatro/files/ -maxdepth 2 -size 0c -exec rm '{}' \\;");
+                useTool(ProcessTools.ADB, "pull /data/local/tmp/balatro/files/. \"" + Platform.getGameSaveLocation() + "\"");
             }
             #endregion
             #endregion
@@ -397,7 +392,7 @@ internal class View
             Log("Platform tools not found...");
 
             if (!fileExists("platform-tools.zip"))
-                TryDownloadFile("platform-tools", PlatformToolsLink, "platform-tools.zip");
+                TryDownloadFile("platform-tools", Platform.getPlatformToolsDownloadLink(), "platform-tools.zip");
 
             Log("Extracting platform-tools...");
             extractZip("platform-tools.zip", "platform-tools");

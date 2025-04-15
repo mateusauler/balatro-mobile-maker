@@ -38,7 +38,26 @@ internal class Tools
     {
         return Directory.Exists(path);
     }
-    
+
+    public static void directoryCopy(string source, string dest)
+    {
+        if (!directoryExists(source))
+            return;
+
+        if (directoryExists(dest))
+            tryDelete(dest);
+
+        foreach (string dirPath in Directory.GetDirectories(source, "*", SearchOption.AllDirectories))
+        {
+            Directory.CreateDirectory(dirPath.Replace(source, dest));
+        }
+
+        foreach (string newPath in Directory.GetFiles(source, "*.*",SearchOption.AllDirectories))
+        {
+            File.Copy(newPath, newPath.Replace(source, dest), true);
+        }
+    }
+
     public static void fileMove(string source, string dest)
     {
         fileCopy(source, dest);

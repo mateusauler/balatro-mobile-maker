@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -15,8 +16,8 @@ internal class Platform
 {
     //I'm not sure which way will be easier to work with, so I'm doing both.
     public static bool isWindows = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-    private static bool isOSX = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-    private static bool isLinux = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+    public static bool isOSX = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+    public static bool isLinux = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
     private static bool isX64 = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture == Architecture.X64;
     private static bool isX86 = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture == Architecture.X86;
@@ -29,11 +30,9 @@ internal class Platform
         if (isWindows)
             RunCommand("platform-tools\\platform-tools\\adb.exe", args);
 
-
-        //TODO: Implement ADB for OSX and Linux
-        if (isOSX) { /*...*/ }
-
-        if (isLinux) { /*...*/ }
+        if (isOSX || isLinux)
+            RunCommand("chmod", "+x platform-tools/platform-tools/adb");
+            RunCommand("platform-tools/platform-tools/adb", args);
     }
 
     //Uses Java with args
@@ -90,7 +89,7 @@ internal class Platform
                 return Constants.OpenJDKWinX64Link;
             //TODO: uhh something maybe
             //if (isX86)
-            //    return Constants.OpenJDKWinX86Link; 
+            //    return Constants.OpenJDKWinX86Link;
             if (isArm64)
                 return Constants.OpenJDKWinArm64Link;
         }
@@ -111,17 +110,28 @@ internal class Platform
                 return Constants.OpenJDKLinuxArm64Link;
         }
 
-
         return "";
     }
 
+    public static string getPlatformToolsDownloadLink()
+    {
+        if (isWindows)
+            return Constants.PlatformToolsWindowsLink;
+
+        if (isOSX)
+            return Constants.PlatformToolsOSXLink;
+
+        if (isLinux)
+            return Constants.PlatformToolsLinuxLink;
+
+        return "";
+    }
 
     public static string getGameSaveLocation()
     {
         if (isWindows)
             return Environment.GetEnvironmentVariable("AppData") + "\\Balatro";
 
-        //TODO: Test Linux location
         if (isLinux)
             return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro";
 
@@ -137,7 +147,7 @@ internal class Platform
     //If it does already exist, this returns true
     public static bool gameExists()
     {
-        if(isWindows)
+        if (isWindows)
             return fileExists("Balatro.exe");
 
 
@@ -170,7 +180,7 @@ internal class Platform
         if (isWindows)
             location = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Balatro\\Balatro.exe";
 
-        //TODO: Test OSX and Linux locations!!!
+        //TODO: Test OSX locations!!!
         if (isOSX)
             location = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/Library/Application Support/Steam/steamapps/common/Balatro/Balatro.app/Contents/Resources/Balatro.love";
 
